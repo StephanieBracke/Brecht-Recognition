@@ -14,6 +14,7 @@ async function start() {
   const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6)
   let image
   let canvas
+  //console.log(faceapi);
   document.body.append('Loaded')
   imageUpload.addEventListener('change', async () => {
     if (image) image.remove()
@@ -28,8 +29,12 @@ async function start() {
     const resizedDetections = faceapi.resizeResults(detections, displaySize)
     const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor))
     results.forEach((result, i) => {
+      var l = result.label;
+      if (result.label == "unknown") {
+        l = 'not brecht';
+      } 
       const box = resizedDetections[i].detection.box
-      const drawBox = new faceapi.draw.DrawBox(box, { label: result.toString() })
+      const drawBox = new faceapi.draw.DrawBox(box, { label: l })
       drawBox.draw(canvas)
     })
   })
@@ -41,11 +46,15 @@ function loadLabeledImages() {
     labels.map(async label => {
       const descriptions = []
       for (let i = 1; i <= 2; i++) {
-        const img = await faceapi.fetchImage(`https://github.com/StephanieBracke/Brecht-Recognition/tree/main/labeled_images/${label}/${i}.jpg`)
+       try {
+        const img = await faceapi.fetchImage(`./labeled_images/${label}/${i}.jpg`);
         const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor()
         descriptions.push(detections.descriptor)
+       } catch (error) {
+         //donothing
+       } 
+       
       }
-
       return new faceapi.LabeledFaceDescriptors(label, descriptions)
     })
   )
